@@ -1,3 +1,25 @@
+#############
+#		    #
+# WARNING ! #
+#			#
+#############
+
+This is a very early stage of the Yubico-Authenticator without systray control menu/icon.
+This has been released for the very large minority of users who do not have a systray.
+
+Currently there is no Windows Installer/OSX installer. Feel free to modify the .spec file and make your own installer.
+
+To run this software first install all necessary modules:
+- PBKDF2
+- pyscard
+- PySide
+
+Then run using:
+	$cd yubicoauthenticator/
+	$python yubico_authenticator_no_systray.py
+
+#############################################################################################
+
 Yubico Authenticator
 ====================
 
