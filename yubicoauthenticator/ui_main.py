@@ -322,15 +322,18 @@ class Ui_Dialog(object):
 
     # check must be a BOOLEAN
     def hide_interface(self):
-        self.progress_timer.stop()
+        print "test"
+        # self.progress_timer.stop()
 
-        pointer = QtCore.QCoreApplication.instance()
-        pointer.setQuitOnLastWindowClosed(False)
-        pointer.closeAllWindows()
+        # pointer = QtCore.QCoreApplication.instance()
+        # pointer.setQuitOnLastWindowClosed(False)
+        # self.hide()
+        #pointer.closeAllWindows()
 
 
-    def closeEvent(self):
+    def closeEvent(self, event):
         #hide the interface and stop timers
+        event.ignore()
         self.hide_interface()
 
 
@@ -409,24 +412,3 @@ class Ui_Dialog(object):
 
     def menu_about(self):
         QtGui.QMessageBox.information(QtGui.QWidget(), "Yubico Authenticator", text.copyright)
-
-
-        # display message
-        # title = "Yubico Authenticator - About"
-        # message = """ 
-        # Copyright (c) 2013-2014 Yubico AB
-
-        # This program is free software: you can redistribute it and/or modify
-        # it under the terms of the GNU General Public License as published by
-        # the Free Software Foundation, either version 3 of the License, or
-        # (at your option) any later version.
-
-        # This program is distributed in the hope that it will be useful, but
-        # WITHOUT ANY WARRANTY; without even the implied warranty of
-        # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-        # General Public License for more details.
-
-        # You should have received a copy of the GNU General Public License
-        # along with this program.  If not, see <http://www.gnu.org/licenses/>."""
-
-        # QtGui.QMessageBox.information(QtGui.QWidget(), title, message)
