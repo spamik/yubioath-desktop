@@ -21,8 +21,6 @@ import signal
 import ui_main as gl
 import yubico_authenticator as yc
 
-
-
 from PySide import QtCore
 from PySide import QtGui
 
@@ -41,116 +39,111 @@ else:
 # Font fix for OSX Mavericks
 if sys.platform == 'darwin':
     from platform import mac_ver
+
     if tuple(mac_ver()[0].split('.')) >= (10, 9):
         QtGui.QFont.insertSubstitution(".Lucida Grande UI", "Lucida Grande")
-
 
 QtCore.QCoreApplication.setOrganizationName('Yubico')
 QtCore.QCoreApplication.setOrganizationDomain('yubico.com')
 QtCore.QCoreApplication.setApplicationName('YubiKey Authenticator')
 
 
-
 class SystemTrayIcon(QtGui.QSystemTrayIcon):
-	def __init__(self, parent=None):
-		QtGui.QSystemTrayIcon.__init__(self, parent)
-		
-
-		#FIX FOR PYINSTALLER
-		if getattr(sys, 'frozen', False):
-		    # we are running in a PyInstaller bundle
-		    basedir = sys._MEIPASS
-		else:
-		    # we are running in a normal Python environment
-		    basedir = os.path.dirname(__file__)
+    def __init__(self, parent=None):
+        QtGui.QSystemTrayIcon.__init__(self, parent)
 
 
-		#set working dir for the icon else it wont show up when executed from the nsis .lnk
-		self.setIcon(QtGui.QIcon(os.path.join(basedir, YUBICO_ICON)))
-		self.iconMenu = QtGui.QMenu(parent)
-		self.setToolTip('Yubico Authenticator')
-
-		
-
-		appcalc = self.iconMenu.addAction("Show Code")
-		appinstr = self.iconMenu.addAction("Instructions")
-		appabout = self.iconMenu.addAction("About")
-		appexit = self.iconMenu.addAction("Exit")
-		self.setContextMenu(self.iconMenu)
-
-		self.connect(appcalc, QtCore.SIGNAL('triggered()') ,self.appCalc)
-		self.connect(appinstr, QtCore.SIGNAL('triggered()') ,self.appInstructions)
-		self.connect(appabout, QtCore.SIGNAL('triggered()') ,self.appShowAbout)
-		self.connect(appexit, QtCore.SIGNAL('triggered()'), self.appExit)
+        #FIX FOR PYINSTALLER
+        if getattr(sys, 'frozen', False):
+            # we are running in a PyInstaller bundle
+            basedir = sys._MEIPASS
+        else:
+            # we are running in a normal Python environment
+            basedir = os.path.dirname(__file__)
 
 
-		self.show()
-		#try to pop the application
-		if sys.platform == "darwin":
-			self.appCalc()
+        #set working dir for the icon else it wont show up when executed from the nsis .lnk
+        self.setIcon(QtGui.QIcon(os.path.join(basedir, YUBICO_ICON)))
+        self.iconMenu = QtGui.QMenu(parent)
+        self.setToolTip('Yubico Authenticator')
+
+        appcalc = self.iconMenu.addAction("Show Code")
+        appinstr = self.iconMenu.addAction("Instructions")
+        appabout = self.iconMenu.addAction("About")
+        appexit = self.iconMenu.addAction("Exit")
+        self.setContextMenu(self.iconMenu)
+
+        self.connect(appcalc, QtCore.SIGNAL('triggered()'), self.appCalc)
+        self.connect(appinstr, QtCore.SIGNAL('triggered()'), self.appInstructions)
+        self.connect(appabout, QtCore.SIGNAL('triggered()'), self.appShowAbout)
+        self.connect(appexit, QtCore.SIGNAL('triggered()'), self.appExit)
+
+        self.show()
+        #try to pop the application
+        if sys.platform == "darwin":
+            self.appCalc()
 
 
-	def appCalc(self):
-		#instantiate the new windows but don't show it yet (needed for qmessagebox parent)
-		self.myapp = Window()
-		#return presence and if the neo is password protected	
-		neo, is_protected = yc.check_neo_presence()
-		#check if the neo is present
-		if neo:
-			#check if it is password protected
-			if is_protected:
-				#hide icon to avoid double clicks and glitches.
-				self.hide()
-				password, ok = QtGui.QInputDialog.getText(self.myapp, "Password", "Password:", QtGui.QLineEdit.Password)
-				self.show()
-				if ok:
-					#do soemthing
-					if yc.unlock_applet(neo, password):
-						#success! now run the authenticator
-						#time.sleep(0.5)	
-						self.myapp = Window()
-						self.myapp.show()
-						self.myapp.activateWindow()
-						#self.myapp.raise_()		
-					else:
-						#fail for some reasons
-						QtGui.QMessageBox.information(self.myapp, self.tr("Warning: No Yubikey NEO detected"),
-                                               "No Yubikey NEO found. Please plugin your Yubikey NEO in one of your USB port", QtGui.QMessageBox.Ok)			
-						return
-				else:
-					QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Warning!"), self.tr("A password is required to access the Yubico Authenticator."))			
-					return
-			#the neo is not protected go on with standard operations!
-			else:
-				#time.sleep(0.5)	
-				self.myapp = Window()
-				self.myapp.setWindowTitle("Authenticator Authenticator")
-				self.myapp.setWindowIcon(QtGui.QIcon(os.path.join(basedir, YUBICO_ICON)))
-				self.myapp.show()
-				self.myapp.activateWindow()
-				#self.myapp.raise_()
-		else:
-			#there is no neo
-			QtGui.QMessageBox.information(self.myapp, self.tr("Warning: No Yubikey NEO detected"),
-                                               "No Yubikey NEO found. Please plugin your Yubikey NEO in one of your USB port", QtGui.QMessageBox.Ok)
-			
-
-	def appShowAbout(self):
-		QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Yubico Authenticator"), self.tr(text.copyright))
+    def appCalc(self):
+        #return presence and if the neo is password protected
+        neo, is_protected = yc.check_neo_presence()
+        #check if the neo is present
+        if neo:
+            #check if it is password protected
+            if is_protected:
+                #hide icon to avoid double clicks and glitches.
+                self.hide()
+                password, ok = QtGui.QInputDialog.getText(self.myapp, "Password", "Password:", QtGui.QLineEdit.Password)
+                self.show()
+                if ok:
+                    #do soemthing
+                    if yc.unlock_applet(neo, password):
+                        #success! now run the authenticator
+                        #time.sleep(0.5)
+                        self.myapp = Window()
+                        self.myapp.show()
+                        self.myapp.activateWindow()
+                    #self.myapp.raise_()
+                    else:
+                        #fail for some reasons
+                        QtGui.QMessageBox.information(self.myapp, self.tr("Warning: No Yubikey NEO detected"),
+                                                      "No Yubikey NEO found. Please plugin your Yubikey NEO in one of your USB port",
+                                                      QtGui.QMessageBox.Ok)
+                        return
+                else:
+                    QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Warning!"),
+                                                  self.tr("A password is required to access the Yubico Authenticator."))
+                    return
+            #the neo is not protected go on with standard operations!
+            else:
+                #time.sleep(0.5)
+                self.myapp = Window()
+                self.myapp.setWindowTitle("Authenticator Authenticator")
+                self.myapp.setWindowIcon(QtGui.QIcon(os.path.join(basedir, YUBICO_ICON)))
+                self.myapp.show()
+                self.myapp.activateWindow()
+            #self.myapp.raise_()
+        else:
+            #there is no neo
+            QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Warning: No Yubikey NEO detected"),
+                                          "No Yubikey NEO found. Please plugin your Yubikey NEO in one of your USB port",
+                                          QtGui.QMessageBox.Ok)
 
 
-	def appInstructions(self):
-		QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Yubico Authenticator"), self.tr(text.instructions))
-
-	def appExit(self):
-		sys.exit(0)
+    def appShowAbout(self):
+        QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Yubico Authenticator"), self.tr(text.copyright))
 
 
-	def iconActivated(self, reason):
-		if reason == QtGui.QSystemTrayIcon.DoubleClick:
-			self.appCalc()
+    def appInstructions(self):
+        QtGui.QMessageBox.information(QtGui.QWidget(), self.tr("Yubico Authenticator"), self.tr(text.instructions))
+
+    def appExit(self):
+        sys.exit(0)
 
 
+    def iconActivated(self, reason):
+        if reason == QtGui.QSystemTrayIcon.DoubleClick:
+            self.appCalc()
 
 
 # main window class
@@ -159,11 +152,11 @@ class Window(QtGui.QWidget):
         super(Window, self).__init__(parent)
         #FIX FOR PYINSTALLER 
         if getattr(sys, 'frozen', False):
-        # we are running in a PyInstaller bundle 
-       		basedir = sys._MEIPASS 
-        else: 
-        # we are running in a normal Python environment 
-        	basedir = os.path.dirname(__file__) 
+            # we are running in a PyInstaller bundle
+            basedir = sys._MEIPASS
+        else:
+            # we are running in a normal Python environment
+            basedir = os.path.dirname(__file__)
 
         windowIcon = QtGui.QIcon(os.path.join(basedir, YUBICO_ICON))
         self.setWindowIcon(windowIcon)
@@ -171,19 +164,18 @@ class Window(QtGui.QWidget):
         self.ui.setupUi(self)
 
 
-
     def closeEvent(self, event):
-    	#handle the close event (x) top right corner
+        #handle the close event (x) top right corner
         self.ui.closeEvent()
 
 
-
 if __name__ == "__main__":
-	app = QtGui.QApplication(sys.argv)
-	app.setQuitOnLastWindowClosed(False)
-	
-	trayIcon = SystemTrayIcon()
-	QtCore.QObject.connect(trayIcon, QtCore.SIGNAL("activated(QSystemTrayIcon::ActivationReason)"), trayIcon.iconActivated)
-	trayIcon.show()
+    app = QtGui.QApplication(sys.argv)
+    app.setQuitOnLastWindowClosed(False)
 
-	sys.exit(app.exec_())
+    trayIcon = SystemTrayIcon()
+    QtCore.QObject.connect(trayIcon, QtCore.SIGNAL("activated(QSystemTrayIcon::ActivationReason)"),
+                           trayIcon.iconActivated)
+    trayIcon.show()
+
+    sys.exit(app.exec_())

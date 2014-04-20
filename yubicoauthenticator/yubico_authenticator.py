@@ -54,15 +54,15 @@ neo = None
 #commands definition #
 ######################
 commands = {
-'list_all': {'cl':0x00,'ins':0xa1,'p1':0x00,'p2':0x00,'data':None},
-'calculate': {'cl':0x00,'ins':0xa2,'p1':0x00,'p2':0x01,'data':None},
-'validate': {'cl':0x00,'ins':0xa3,'p1':0x00,'p2':0x00,'data':None},
-'calculate_all': {'cl':0x00,'ins':0xa4,'p1':0x00,'p2':0x01,'data':None},
-'unlock': {'cl':0x00,'ins':0xa3,'p1':0x00,'p2':0x00,'data':None}, 
-'delete': {'cl':0x00,'ins':0x02,'p1':0x00,'p2':0x00,'data':None},
-'put': {'cl':0x00,'ins':0x01,'p1':0x00,'p2':0x00,'data':None},
-'set_code': {'cl':0x00,'ins':0x03,'p1':0x00,'p2':0x00,'data':None},
-'unset_code': {'cl':0x00,'ins':0x03,'p1':0x00,'p2':0x00,'data':None}
+    'list_all': {'cl': 0x00, 'ins': 0xa1, 'p1': 0x00, 'p2': 0x00, 'data': None},
+    'calculate': {'cl': 0x00, 'ins': 0xa2, 'p1': 0x00, 'p2': 0x01, 'data': None},
+    'validate': {'cl': 0x00, 'ins': 0xa3, 'p1': 0x00, 'p2': 0x00, 'data': None},
+    'calculate_all': {'cl': 0x00, 'ins': 0xa4, 'p1': 0x00, 'p2': 0x01, 'data': None},
+    'unlock': {'cl': 0x00, 'ins': 0xa3, 'p1': 0x00, 'p2': 0x00, 'data': None},
+    'delete': {'cl': 0x00, 'ins': 0x02, 'p1': 0x00, 'p2': 0x00, 'data': None},
+    'put': {'cl': 0x00, 'ins': 0x01, 'p1': 0x00, 'p2': 0x00, 'data': None},
+    'set_code': {'cl': 0x00, 'ins': 0x03, 'p1': 0x00, 'p2': 0x00, 'data': None},
+    'unset_code': {'cl': 0x00, 'ins': 0x03, 'p1': 0x00, 'p2': 0x00, 'data': None}
 }
 
 
@@ -74,166 +74,163 @@ commands = {
 
 
 def execute_command(command_name, param=None):
-		global neo
+    global neo
 
-		####################
-		# execute commands #
-		####################
-		cmd = commands[command_name]
-		cred_list = None
+    ####################
+    # execute commands #
+    ####################
+    cmd = commands[command_name]
+    cred_list = None
 
-		if command_name == 'list_all':
-			resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'])
-			#tag = resp[0]
-			#length = resp[1]
+    if command_name == 'list_all':
+        resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'])
+    #tag = resp[0]
+    #length = resp[1]
 
-		#this calculates all TOTP codes
-		elif command_name == 'calculate_all':
-			payload = functions.calc_all_payload()
-			try:
-				resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
-				
-			except Exception, e:
+    #this calculates all TOTP codes
+    elif command_name == 'calculate_all':
+        payload = functions.calc_all_payload()
+        try:
+            resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
 
-				#set the neo to NONE as we need to check for password again
-				print e
-				neo = None
-				return None	
+        except Exception, e:
 
-			cred_list = functions.parse_response(resp)
+            #set the neo to NONE as we need to check for password again
+            print e
+            neo = None
+            return None
 
-
-		# this is never used to be implemented
-		elif command_name == 'unlock':
-			#payload = functions.unlock_applet()
-			print "debug123"
-
-		# this command deletes 1 entry from the credential list
-		elif command_name == 'delete':
-			#prepare payload for the command
-			payload = functions.delete_payload(param)
-			try:
-				resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
-				return True
-
-			except Exception, e:
-				#set NEO at None because it may have been unplugged
-				neo = None
-				print e
-				return False
-
-		elif command_name == "put":
-			#build the payload for the command
-			payload = functions.put_payload(param)
-			try:
-				resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
-				return True
-				
-			except Exception, e:
-				#set NEO at None because it may have been unplugged
-				neo = None
-				print e
-				return False
-
-		elif command_name == "calculate":
-			payload = functions.calculate_payload(param)
-
-			try:
-				resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
-				hotp = functions.parse_hotp_response(resp)
-				return hotp	
-			except Exception, e:
-				#neo = None
-				print e
-				return None
-
-		elif command_name == 'set_code':
-
-			install_id = functions.get_id(neo) #get id
-			challenge = '\x1f\x2f\x3f\x4f\x5f\x6f\x7f\x8f'
-
-			#1000 round of pbkdf2
-			key = PBKDF2(param, install_id).read(16)
-			response = hmac.new(key, challenge, hashlib.sha1).digest()
-			#build payload
-			payload = functions.set_code_payload(key, response, challenge)
-
-			try: 
-				resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
-				return 
-				
-			except Exception, e:
-				print e
-				return None
-
-		elif command_name == 'unset_code':
-
-			payload = functions.unset_code_payload()
-
-			try:
-				resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
-				return
-			except Exception, e:
-				print e
-				return None
+        cred_list = functions.parse_response(resp)
 
 
-		else:
-			print "unknown command"
-			sys.exit(1)
+    # this is never used to be implemented
+    elif command_name == 'unlock':
+        #payload = functions.unlock_applet()
+        print "debug123"
+
+    # this command deletes 1 entry from the credential list
+    elif command_name == 'delete':
+        #prepare payload for the command
+        payload = functions.delete_payload(param)
+        try:
+            resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
+            return True
+
+        except Exception, e:
+            #set NEO at None because it may have been unplugged
+            neo = None
+            print e
+            return False
+
+    elif command_name == "put":
+        #build the payload for the command
+        payload = functions.put_payload(param)
+        try:
+            resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
+            return True
+
+        except Exception, e:
+            #set NEO at None because it may have been unplugged
+            neo = None
+            print e
+            return False
+
+    elif command_name == "calculate":
+        payload = functions.calculate_payload(param)
+
+        try:
+            resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
+            hotp = functions.parse_hotp_response(resp)
+            return hotp
+        except Exception, e:
+            #neo = None
+            print e
+            return None
+
+    elif command_name == 'set_code':
+
+        install_id = functions.get_id(neo) #get id
+        challenge = '\x1f\x2f\x3f\x4f\x5f\x6f\x7f\x8f'
+
+        #1000 round of pbkdf2
+        key = PBKDF2(param, install_id).read(16)
+        response = hmac.new(key, challenge, hashlib.sha1).digest()
+        #build payload
+        payload = functions.set_code_payload(key, response, challenge)
+
+        try:
+            resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
+            return
+
+        except Exception, e:
+            print e
+            return None
+
+    elif command_name == 'unset_code':
+
+        payload = functions.unset_code_payload()
+
+        try:
+            resp = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
+            return
+        except Exception, e:
+            print e
+            return None
 
 
-		return cred_list	
+    else:
+        print "unknown command"
+        sys.exit(1)
 
+    return cred_list
 
 
 #
 # Check if the NEO is plugged in and if it is protected
 #
 def check_neo_presence():
-	global neo
-	#check if NEO is inserted
-	if not neo:
-		try:
-			#use open_key if this gives problems
-			neo = libykneo.open_key_multiple_readers(None)
-			#return PRESENCE and PROTECTED
-			if neo.password_protected:
-				#PRESENT AND PROTECTED
-				return neo, True
-			else:
-				#PRESENTE BUT NOT PROTECTED
-				return neo, False
-		except Exception, e:
-			print e
-			#The NEO is not plugged in, protected is not checked
-			return None, False	
-	else:
-		if neo.password_protected:
-			#PRESENT AND PROTECTED
-			return neo, True
-		else:
-			return neo, False
+    global neo
+    #check if NEO is inserted
+    if not neo:
+        try:
+            #use open_key if this gives problems
+            neo = libykneo.open_key_multiple_readers(None)
+            #return PRESENCE and PROTECTED
+            if neo.password_protected:
+                #PRESENT AND PROTECTED
+                return neo, True
+            else:
+                #PRESENTE BUT NOT PROTECTED
+                return neo, False
+        except Exception, e:
+            print e
+            #The NEO is not plugged in, protected is not checked
+            return None, False
+    else:
+        if neo.password_protected:
+            #PRESENT AND PROTECTED
+            return neo, True
+        else:
+            return neo, False
 
 
 #
 # Unlock the applet with the provided user password
 #
 def unlock_applet(neo, password):
-	
-	install_id = functions.get_id(neo) #get id
-	challenge = functions.get_challenge(neo) #get challenge
-	
-	key = PBKDF2(password, install_id).read(16)
-	response = hmac.new(key, challenge, hashlib.sha1).digest()
-	cmd = commands['unlock']
-	payload = functions.unlock_payload(response)
+    install_id = functions.get_id(neo) #get id
+    challenge = functions.get_challenge(neo) #get challenge
 
-	try:
-		result = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)	
-		return True
-	except Exception, e:
-		#set the NEO to none as we will need to check for password again
-		neo = None
-		print e
-		return False
+    key = PBKDF2(password, install_id).read(16)
+    response = hmac.new(key, challenge, hashlib.sha1).digest()
+    cmd = commands['unlock']
+    payload = functions.unlock_payload(response)
+
+    try:
+        result = neo._cmd_ok(cmd['cl'], cmd['ins'], cmd['p1'], cmd['p2'], payload)
+        return True
+    except Exception, e:
+        #set the NEO to none as we will need to check for password again
+        neo = None
+        print e
+        return False

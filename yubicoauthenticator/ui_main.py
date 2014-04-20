@@ -210,6 +210,7 @@ class Ui_Dialog(object):
         #retranslate & connect
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        self.dialog = Dialog
 
 
 
@@ -323,10 +324,7 @@ class Ui_Dialog(object):
     # check must be a BOOLEAN
     def hide_interface(self):
         self.progress_timer.stop()
-
-        pointer = QtCore.QCoreApplication.instance()
-        pointer.setQuitOnLastWindowClosed(False)
-        pointer.closeAllWindows()
+        self.dialog.close()
 
 
     def closeEvent(self):
