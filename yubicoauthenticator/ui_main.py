@@ -324,6 +324,7 @@ class Ui_Dialog(object):
     # check must be a BOOLEAN
     def hide_interface(self):
         self.progress_timer.stop()
+        yc.disconnect_neo()
         self.dialog.close()
 
 

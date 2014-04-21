@@ -234,3 +234,11 @@ def unlock_applet(neo, password):
         neo = None
         print e
         return False
+
+
+#
+# Disconnect neo and make it available for other applications
+#
+def disconnect_neo():
+    global neo
+    neo = None
